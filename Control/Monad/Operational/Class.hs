@@ -30,6 +30,7 @@ import Control.Monad.Trans.Class
 import Data.Monoid
 
 class Monad m => Operational t m | m -> t where
+  -- | Construct an operational action from a single imperative.
   singleton :: t a -> m a
 
 instance (Operational f m) => Operational f (ReaderT e m) where
