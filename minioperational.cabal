@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                minioperational
-version:             0.1
+version:             0.2
 synopsis:            fast and simple operational monad
 description:         This package provides tiny implementation of operational monad.
 homepage:            https://github.com/fumieval/minioperational
@@ -24,4 +24,4 @@ library
   ghc-options: -Wall -O2
   exposed-modules:     Control.Monad.Operational.Mini, Control.Monad.Operational.Class
   -- other-modules:       
-  build-depends:       base ==4.*, kan-extensions ==3.*, free ==3.*, transformers >= 0.2.0 && <0.4
+  build-depends:       base ==4.*, transformers >= 0.2.0 && <0.4
