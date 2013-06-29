@@ -1,5 +1,5 @@
 {-# LANGUAGE RankNTypes, GADTs #-}
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses,KindSignatures #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Control.Monad.Trans.Operational.Mini
@@ -12,8 +12,12 @@
 --
 -- Simple operational monad transformer
 ----------------------------------------------------------------------------
-module Control.Monad.Trans.Operational.Mini (ProgramT(..), interpret, module Control.Monad.Operational.Class) where
+module Control.Monad.Trans.Operational.Mini (
+  ProgramT(..), interpret,  ReifiedProgramT(..), fromReifiedT,
+  module Control.Monad.Operational.Class
+  ) where
 
+import Control.Monad
 import Control.Monad.Operational.Class
 import Control.Applicative
 import Control.Monad.Trans.Class
@@ -40,3 +44,44 @@ instance Operational t (ProgramT t m) where
 
 instance MonadTrans (ProgramT t) where
     lift m = ProgramT $ \p _ -> m >>= p
+
+
+infix 1 :>>=
+
+data ReifiedProgramT t (m :: * -> *) a where
+  Return :: a -> ReifiedProgramT t m a
+  (:>>=) :: t a -> (a -> ReifiedProgramT t m b) -> ReifiedProgramT t m b
+  Lift :: m a -> (a -> ReifiedProgramT t m b) -> ReifiedProgramT t m b
+
+fromReifiedT :: Monad m => ReifiedProgramT t m a -> ProgramT t m a
+fromReifiedT m = ProgramT $ \p i ->
+  let go (Return a) = p a
+      go (t :>>= c) = i t (go . c)
+      go (Lift a c) = a >>= go . c
+   in go m
+
+
+instance Monad m => Functor (ReifiedProgramT t m) where
+    fmap f = go where
+        go (Return a) = Return (f a)
+        go (t :>>= k) = t :>>= go . k
+        go (Lift a c) = Lift a (go.c)
+    {-# INLINE fmap #-}
+
+instance Monad m => Applicative (ReifiedProgramT t m) where
+    pure = Return
+    {-# INLINE pure #-}
+    Return f <*> Return a = Return (f a)
+    mf <*> m = mf >>= \f -> fmap f m
+
+instance Monad m => Monad (ReifiedProgramT t m) where
+    return = Return
+    {-# INLINE return #-}
+    Return a >>= f = f a
+    (t :>>= m) >>= k = t :>>= (>>= k) . m
+    Lift a c >>= f = Lift a (c >=> f)
+
+instance Monad m => Operational t (ReifiedProgramT t m) where
+    singleton t = t :>>= Return
+
+instance MonadTrans (ReifiedProgramT t) where lift = flip Lift Return
