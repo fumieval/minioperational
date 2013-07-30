@@ -1,4 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances, TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 -----------------------------------------------------------------------------
 -- |
@@ -12,7 +12,7 @@
 --
 -- A class for operational monads
 ----------------------------------------------------------------------------
-module Control.Monad.Operational.Class (Operational(..)) where
+module Control.Monad.Operational.Class ((:!)(..)) where
 
 import Control.Monad.Trans.Reader
 import qualified Control.Monad.Trans.State.Strict as Strict
@@ -29,42 +29,42 @@ import Control.Monad.Trans.Identity
 import Control.Monad.Trans.Class
 import Data.Monoid
 
-class Monad m => Operational t m where -- need fundeps?
+class Monad m => t :! m | m -> t where
   -- | Construct an operational action from a single imperative.
   singleton :: t a -> m a
 
-instance (Operational f m) => Operational f (ReaderT e m) where
+instance (t :! m) => t :! ReaderT e m where
   singleton = lift . singleton
 
-instance (Operational f m) => Operational f (Lazy.StateT s m) where
+instance (t :! m) => t :! Lazy.StateT s m where
   singleton = lift . singleton
 
-instance (Operational f m) => Operational f (Strict.StateT s m) where
+instance (t :! m) => t :! Strict.StateT s m where
   singleton = lift . singleton
 
-instance (Operational f m) => Operational f (ContT r m) where
+instance (t :! m) => t :! ContT r m where
   singleton = lift . singleton
 
-instance (Operational f m, Monoid w) => Operational f (Lazy.WriterT w m) where
+instance (t :! m, Monoid w) => t :! Lazy.WriterT w m where
   singleton = lift . singleton
 
-instance (Operational f m, Monoid w) => Operational f (Strict.WriterT w m) where
+instance (t :! m, Monoid w) => t :! Strict.WriterT w m where
   singleton = lift . singleton
 
-instance (Operational f m, Monoid w) => Operational f (Strict.RWST r w s m) where
+instance (t :! m, Monoid w) => t :! Strict.RWST r w s m where
   singleton = lift . singleton
 
-instance (Operational f m, Monoid w) => Operational f (Lazy.RWST r w s m) where
+instance (t :! m, Monoid w) => t :! Lazy.RWST r w s m where
   singleton = lift . singleton
 
-instance (Operational f m) => Operational f (MaybeT m) where
+instance (t :! m) => t :! MaybeT m where
   singleton = lift . singleton
 
-instance (Operational f m) => Operational f (IdentityT m) where
+instance (t :! m) => t :! IdentityT m where
   singleton = lift . singleton
 
-instance (Operational f m) => Operational f (ListT m) where
+instance (t :! m) => t :! ListT m where
   singleton = lift . singleton
 
-instance (Operational f m, Error e) => Operational f (ErrorT e m) where
+instance (t :! m, Error e) => t :! ErrorT e m where
   singleton = lift . singleton

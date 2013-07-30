@@ -1,4 +1,4 @@
-{-# LANGUAGE RankNTypes, FlexibleInstances, MultiParamTypeClasses, GADTs #-}
+{-# LANGUAGE RankNTypes, FlexibleInstances, MultiParamTypeClasses, GADTs, TypeOperators #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Control.Monad.Operational.Mini
@@ -42,10 +42,10 @@ instance Monad (Program t) where
 interpret :: Monad m => (forall x. t x -> m x) -> Program t a -> m a
 interpret e (Program m) = m return (\t f -> e t >>= f)
 
-cloneProgram :: Operational t m => Program t a -> m a
+cloneProgram :: (t :! m) => Program t a -> m a
 cloneProgram (Program m) = m return (\t c -> singleton t >>= c)
 
-instance Operational t (Program t) where
+instance t :! Program t where
     singleton t = Program $ \p i -> i t p
 
 -- | Reified version of 'Program'. It is useful for testing.
@@ -76,5 +76,5 @@ instance Monad (ReifiedProgram t) where
     Return a >>= f = f a
     (t :>>= m) >>= k = t :>>= (>>= k) . m
 
-instance Operational t (ReifiedProgram t) where
+instance t :! ReifiedProgram t where
     singleton t = t :>>= Return

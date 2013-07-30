@@ -1,4 +1,5 @@
 {-# LANGUAGE RankNTypes, GADTs #-}
+{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses,KindSignatures #-}
 -----------------------------------------------------------------------------
 -- |
@@ -39,7 +40,7 @@ instance Monad (ProgramT t m) where
 interpret :: Monad m => (forall x. t x -> m x) -> ProgramT t m a -> m a
 interpret e (ProgramT m) = m return (\t c -> e t >>= c)
 
-instance Operational t (ProgramT t m) where
+instance t :! ProgramT t m where
     singleton t = ProgramT $ \p i -> i t p
 
 instance MonadTrans (ProgramT t) where
@@ -81,7 +82,7 @@ instance Monad m => Monad (ReifiedProgramT t m) where
     (t :>>= m) >>= k = t :>>= (>>= k) . m
     Lift a c >>= f = Lift a (c >=> f)
 
-instance Monad m => Operational t (ReifiedProgramT t m) where
+instance Monad m => t :! ReifiedProgramT t m where
     singleton t = t :>>= Return
 
 instance MonadTrans (ReifiedProgramT t) where lift = flip Lift Return
