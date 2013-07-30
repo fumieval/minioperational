@@ -15,11 +15,13 @@
 ----------------------------------------------------------------------------
 module Control.Monad.Trans.Operational.Mini (
   ProgramT(..), interpret,  ReifiedProgramT(..), fromReifiedT,
-  module Control.Monad.Operational.Class
+  module Control.Monad.Operational.Class,
+  module Control.Monad.Operational.TH
   ) where
 
 import Control.Monad
 import Control.Monad.Operational.Class
+import Control.Monad.Operational.TH
 import Control.Applicative
 import Control.Monad.Trans.Class
 
