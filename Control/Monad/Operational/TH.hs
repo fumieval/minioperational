@@ -4,11 +4,7 @@ import Prelude hiding (mapM)
 import Language.Haskell.TH
 import Control.Monad.Operational.Class
 import Data.Char
-
-import Control.Monad.Trans.State
-import Control.Applicative
 import qualified Data.Map as Map
-import Control.Lens
 import Data.List (nub)
 import Data.Traversable
 
@@ -39,7 +35,7 @@ makeSingletons name = do
                     Just (VarT v) -> v
                     _ -> i
 
-            let ref = Map.fromList [(v, VarT $ mkName $ "v" ++ show i) | (i, v) <- zip [0..] vs_]
+            let ref = Map.fromList [(v, VarT $ mkName $ "v" ++ show i) | (i, v) <- zip [(0 :: Int)..] vs_]
             let vs = map (refresh1 ref) vs_
             let resultType = renameType ref resultType_
             let argTypes = map (renameType ref) argTypes_
