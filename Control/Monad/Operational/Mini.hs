@@ -16,9 +16,11 @@ module Control.Monad.Operational.Mini (Program(..)
     , cloneProgram
     , ReifiedProgram(..)
     , fromReified
-    , module Control.Monad.Operational.Class) where
+    , module Control.Monad.Operational.Class
+    , module Control.Monad.Operational.TH) where
 
 import Control.Monad.Operational.Class
+import Control.Monad.Operational.TH
 import Control.Applicative
 
 infixl 1 :>>=
