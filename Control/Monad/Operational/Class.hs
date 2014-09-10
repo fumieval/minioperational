@@ -29,6 +29,9 @@ import Control.Monad.Trans.Cont
 import Control.Monad.Trans.Maybe
 import Control.Monad.Trans.List
 import Control.Monad.Trans.Error
+#if MIN_VERSION_transformers(0,4,0)
+import Control.Monad.Trans.Except
+#endif
 import Control.Monad.Trans.Identity
 import Control.Monad.Trans.Class
 import Data.Monoid
