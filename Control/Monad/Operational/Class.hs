@@ -1,5 +1,9 @@
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances, TypeOperators #-}
+{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE CPP #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Control.Monad.Operational.Class
@@ -68,3 +72,8 @@ instance (t :! m) => t :! ListT m where
 
 instance (t :! m, Error e) => t :! ErrorT e m where
   singleton = lift . singleton
+
+#if MIN_VERSION_transformers(0,4,0)
+instance (t :! m) => t :! ExceptT e m where
+  singleton = lift . singleton
+#endif
