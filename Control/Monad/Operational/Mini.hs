@@ -50,8 +50,8 @@ cloneProgram :: (Monad m, Elevate t m) => Program t a -> m a
 cloneProgram (Program m) = m return ((>>=) . elevate)
 
 instance Tower (Program t) where
-    type Floors (Program t) = t :> Empty
-    toLoft = simply $ \t -> Program $ \p i -> i t p
+    type Floors (Program t) = t :> ReifiedProgram t :> Empty
+    toLoft = (\t -> Program $ \p i -> i t p) ||> fromReified ||> exhaust
 
 -- | Reified version of 'Program'. It is useful for testing.
 data ReifiedProgram t a where
@@ -82,5 +82,5 @@ instance Monad (ReifiedProgram t) where
     (t :>>= m) >>= k = t :>>= (>>= k) . m
 
 instance Tower (ReifiedProgram t) where
-    type Floors (ReifiedProgram t) = t :> Empty
-    toLoft = simply (:>>= Return)
+    type Floors (ReifiedProgram t) = t :> Program t :> Empty
+    toLoft = (:>>= Return) ||> cloneProgram ||> exhaust
