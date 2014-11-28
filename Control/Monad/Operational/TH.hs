@@ -2,11 +2,11 @@
 module Control.Monad.Operational.TH (makeSingletons) where
 import Prelude hiding (mapM)
 import Language.Haskell.TH
-import Control.Monad.Operational.Class
 import Data.Char
 import qualified Data.Map as Map
 import Data.List (nub)
 import Data.Traversable
+import Control.Elevator
 
 renameType :: Map.Map Name Type -> Type -> Type
 renameType m (VarT n) = case n `Map.lookup` m of
@@ -52,12 +52,12 @@ makeSingletons name = do
             let vars = map PlainTV $ (m :) $ nub
                     $ tyVars instr ++ tyVars resultType' ++ concatMap tyVars argTypes'
 
-            let sig = SigD bodyName $ ForallT vars [ClassP ''(:!) [instr, VarT m]]
+            let sig = SigD bodyName $ ForallT vars [ClassP ''Elevate [instr, VarT m]]
                     $ foldr (\x y -> AppT ArrowT x `AppT` y) (AppT (VarT m) resultType') argTypes'
             
             ps <- mapM (newName . ("p"++) . show) [0..length argTypes - 1]
 
-            let body = AppE (VarE 'singleton) $ foldl AppE (ConE conName) (map VarE ps)
+            let body = AppE (VarE 'elevate) $ foldl AppE (ConE conName) (map VarE ps)
 
             return [sig, FunD bodyName [Clause (map VarP ps) (NormalB body) []]]  
 

@@ -1,4 +1,4 @@
-{-# LANGUAGE RankNTypes, FlexibleInstances, MultiParamTypeClasses, GADTs, TypeOperators #-}
+{-# LANGUAGE RankNTypes, FlexibleInstances, MultiParamTypeClasses, GADTs, TypeOperators, DataKinds, TypeFamilies, ConstraintKinds, FlexibleContexts #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Control.Monad.Operational.Mini
@@ -22,6 +22,8 @@ module Control.Monad.Operational.Mini (Program(..)
 import Control.Monad.Operational.Class
 import Control.Monad.Operational.TH
 import Control.Applicative
+import Data.OpenUnion1.Clean
+import Control.Elevator
 
 infixl 1 :>>=
 
@@ -44,11 +46,12 @@ instance Monad (Program t) where
 interpret :: Monad m => (forall x. t x -> m x) -> Program t a -> m a
 interpret e (Program m) = m return (\t f -> e t >>= f)
 
-cloneProgram :: (t :! m) => Program t a -> m a
-cloneProgram (Program m) = m return (\t c -> singleton t >>= c)
+cloneProgram :: (Monad m, Elevate t m) => Program t a -> m a
+cloneProgram (Program m) = m return ((>>=) . elevate)
 
-instance t :! Program t where
-    singleton t = Program $ \p i -> i t p
+instance Tower (Program t) where
+    type Floors (Program t) = t :> Empty
+    toLoft = simply $ \t -> Program $ \p i -> i t p
 
 -- | Reified version of 'Program'. It is useful for testing.
 data ReifiedProgram t a where
@@ -78,5 +81,6 @@ instance Monad (ReifiedProgram t) where
     Return a >>= f = f a
     (t :>>= m) >>= k = t :>>= (>>= k) . m
 
-instance t :! ReifiedProgram t where
-    singleton t = t :>>= Return
+instance Tower (ReifiedProgram t) where
+    type Floors (ReifiedProgram t) = t :> Empty
+    toLoft = simply (:>>= Return)

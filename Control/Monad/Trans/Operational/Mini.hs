@@ -1,6 +1,6 @@
 {-# LANGUAGE RankNTypes, GADTs #-}
 {-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses,KindSignatures #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses,KindSignatures, DataKinds, TypeFamilies, ConstraintKinds #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Control.Monad.Trans.Operational.Mini
@@ -16,6 +16,7 @@
 module Control.Monad.Trans.Operational.Mini (
   ProgramT(..)
   , unProgram
+  , cloneProgramT
   , interpret
   , ReifiedProgramT(..)
   , fromReifiedT
@@ -30,9 +31,14 @@ import Control.Monad.Operational.Class
 import Control.Monad.Operational.TH
 import Control.Applicative
 import Control.Monad.Trans.Class
+import Control.Elevator
+import Data.OpenUnion1.Clean
 
 newtype ProgramT t m a = ProgramT
   { unProgramT :: forall r. (a -> r) -> (m r -> r) -> (forall x. t x -> (x -> r) -> r) -> r }
+
+cloneProgramT :: (Monad n, Elevate t n, Elevate m n) => ProgramT t m a -> n a
+cloneProgramT (ProgramT m) = m return (join . elevate) ((>>=) . elevate)
 
 unProgram :: Monad m => ProgramT t m a -> (a -> m r) -> (forall x. t x -> (x -> m r) -> m r) -> m r
 unProgram (ProgramT m) r b = m r join b
@@ -52,8 +58,9 @@ instance Monad (ProgramT t m) where
 interpret :: Monad m => (forall x. t x -> m x) -> ProgramT t m a -> m a
 interpret e (ProgramT m) = m return join (\t c -> e t >>= c)
 
-instance t :! ProgramT t m where
-    singleton t = ProgramT $ \p _ i -> i t p
+instance (Monad m, Tower m) => Tower (ProgramT t m) where
+    type Floors (ProgramT t m) = t :> Floors1 m
+    toLoft = (\t -> ProgramT $ \p _ i -> i t p) ||> lift . toLoft1
 
 instance MonadTrans (ProgramT t) where
     lift m = ProgramT $ \p l _ -> l (liftM p m)
@@ -102,7 +109,8 @@ instance Monad m => Monad (ReifiedProgramT t m) where
     (t :>>= m) >>= k = t :>>= (>>= k) . m
     Lift a c >>= f = Lift a (c >=> f)
 
-instance Monad m => t :! ReifiedProgramT t m where
-    singleton t = t :>>= Return
+instance (Monad m, Tower m) => Tower (ReifiedProgramT t m) where
+    type Floors (ReifiedProgramT t m) = t :> Floors1 m
+    toLoft = (:>>= Return) ||> lift . toLoft1
 
 instance MonadTrans (ReifiedProgramT t) where lift = flip Lift Return
