@@ -21,9 +21,10 @@ module Control.Monad.Operational.Mini (Program(..)
 
 import Control.Monad.Operational.Class
 import Control.Monad.Operational.TH
-import Control.Applicative
 import Data.OpenUnion1.Clean
 import Control.Elevator
+import Control.Applicative
+import Data.Functor.Identity
 
 infixl 1 :>>=
 
@@ -50,8 +51,8 @@ cloneProgram :: (Monad m, Elevate t m) => Program t a -> m a
 cloneProgram (Program m) = m return ((>>=) . elevate)
 
 instance Tower (Program t) where
-    type Floors (Program t) = t :> ReifiedProgram t :> Empty
-    toLoft = (\t -> Program $ \p i -> i t p) ||> fromReified ||> exhaust
+    type Floors (Program t) = t :> ReifiedProgram t :> Identity :> Empty
+    toLoft = (\t -> Program $ \p i -> i t p) ||> fromReified ||> pure . runIdentity ||> exhaust
 
 -- | Reified version of 'Program'. It is useful for testing.
 data ReifiedProgram t a where
@@ -82,5 +83,5 @@ instance Monad (ReifiedProgram t) where
     (t :>>= m) >>= k = t :>>= (>>= k) . m
 
 instance Tower (ReifiedProgram t) where
-    type Floors (ReifiedProgram t) = t :> Program t :> Empty
-    toLoft = (:>>= Return) ||> cloneProgram ||> exhaust
+    type Floors (ReifiedProgram t) = t :> Program t :> Identity :> Empty
+    toLoft = (:>>= Return) ||> (\(Program m) -> Return (:>>=)) ||> pure . runIdentity ||> exhaust
