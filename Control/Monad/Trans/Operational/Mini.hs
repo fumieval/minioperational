@@ -125,7 +125,7 @@ instance (Monad m, Tower m) => Tower (ReifiedProgramT t m) where
       :> P.ReifiedProgram t
       :> Floors1 m
     toLoft = (:>>= Return)
-      ||> cloneProgramT
+      ||> (\(ProgramT m) -> m Return (flip Lift id) (:>>=))
       ||> (\(P.Program m) -> m Return (:>>=))
       ||> (\(P.Program m) -> m Return (:>>=)) . P.fromReified
       ||> lift . toLoft1
