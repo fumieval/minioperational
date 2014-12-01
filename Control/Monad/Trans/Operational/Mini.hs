@@ -67,7 +67,7 @@ instance (Monad m, Tower m) => Tower (ProgramT t m) where
       :> Floors1 m
     toLoft = (\t -> ProgramT $ \p _ i -> i t p)
       ||> fromReifiedT
-      ||> P.cloneProgram
+      ||> (\(P.Program m) -> ProgramT $ \r _ b -> m r b) 
       ||> P.cloneProgram . P.fromReified
       ||> lift . toLoft1
 
@@ -126,7 +126,7 @@ instance (Monad m, Tower m) => Tower (ReifiedProgramT t m) where
       :> Floors1 m
     toLoft = (:>>= Return)
       ||> cloneProgramT
-      ||> P.cloneProgram
+      ||> (\(P.Program m) -> m Return (:>>=))
       ||> P.cloneProgram . P.fromReified
       ||> lift . toLoft1
 
