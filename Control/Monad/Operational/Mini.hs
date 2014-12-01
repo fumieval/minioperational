@@ -84,4 +84,4 @@ instance Monad (ReifiedProgram t) where
 
 instance Tower (ReifiedProgram t) where
     type Floors (ReifiedProgram t) = t :> Program t :> Identity :> Empty
-    toLoft = (:>>= Return) ||> (\(Program m) -> Return (:>>=)) ||> pure . runIdentity ||> exhaust
+    toLoft = (:>>= Return) ||> (\(Program m) -> m Return (:>>=)) ||> pure . runIdentity ||> exhaust
