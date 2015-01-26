@@ -1,5 +1,5 @@
 name:                minioperational
-version:             0.4.8.1
+version:             0.4.9
 synopsis:            fast and simple operational monad
 description:         This package provides tiny implementation of operational monad.
 homepage:            https://github.com/fumieval/minioperational
@@ -23,5 +23,5 @@ library
     , Control.Monad.Trans.Operational.Mini
     , Control.Monad.Operational.Class
     , Control.Monad.Operational.TH
-  -- other-modules:       
-  build-depends:       base ==4.*, transformers >= 0.2.0 && <0.6, template-haskell, containers, elevator, clean-unions
+  -- other-modules:
+  build-depends:       base ==4.*, transformers >= 0.2.0 && <0.6, template-haskell, containers, elevator >= 0.2 && <0.3, extensible >= 0.2.6 && <3, mtl >= 2.0

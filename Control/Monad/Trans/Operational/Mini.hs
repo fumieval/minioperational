@@ -32,7 +32,6 @@ import Control.Monad.Operational.TH
 import Control.Applicative
 import Control.Monad.Trans.Class
 import Control.Elevator
-import Data.OpenUnion1.Clean
 import qualified Control.Monad.Operational.Mini as P
 
 newtype ProgramT t m a = ProgramT
@@ -61,15 +60,15 @@ interpret e (ProgramT m) = m return join (\t c -> e t >>= c)
 
 instance (Monad m, Tower m) => Tower (ProgramT t m) where
     type Floors (ProgramT t m) = t
-      :> ReifiedProgramT t m
-      :> P.Program t
-      :> P.ReifiedProgram t
-      :> Floors1 m
-    toLoft = (\t -> ProgramT $ \p _ i -> i t p)
-      ||> fromReifiedT
-      ||> (\(P.Program m) -> ProgramT $ \r _ b -> m r b) 
-      ||> (\(P.Program m) -> ProgramT $ \r _ b -> m r b) . P.fromReified
-      ||> lift . toLoft1
+      ': ReifiedProgramT t m
+      ': P.Program t
+      ': P.ReifiedProgram t
+      ': Floors1 m
+    stairs = (\t -> ProgramT $ \p _ i -> i t p)
+      `rung` fromReifiedT
+      `rung` (\(P.Program m) -> ProgramT $ \r _ b -> m r b)
+      `rung` (\(P.Program m) -> ProgramT $ \r _ b -> m r b) . P.fromReified
+      `rung` liftGondolas
 
 instance MonadTrans (ProgramT t) where
     lift m = ProgramT $ \p l _ -> l (liftM p m)
@@ -120,14 +119,14 @@ instance Monad m => Monad (ReifiedProgramT t m) where
 
 instance (Monad m, Tower m) => Tower (ReifiedProgramT t m) where
     type Floors (ReifiedProgramT t m) = t
-      :> ProgramT t m
-      :> P.Program t
-      :> P.ReifiedProgram t
-      :> Floors1 m
-    toLoft = (:>>= Return)
-      ||> (\(ProgramT m) -> m Return (flip Lift id) (:>>=))
-      ||> (\(P.Program m) -> m Return (:>>=))
-      ||> (\(P.Program m) -> m Return (:>>=)) . P.fromReified
-      ||> lift . toLoft1
+      ': ProgramT t m
+      ': P.Program t
+      ': P.ReifiedProgram t
+      ': Floors1 m
+    stairs = (:>>= Return)
+      `rung` (\(ProgramT m) -> m Return (flip Lift id) (:>>=))
+      `rung` (\(P.Program m) -> m Return (:>>=))
+      `rung` (\(P.Program m) -> m Return (:>>=)) . P.fromReified
+      `rung` liftGondolas
 
 instance MonadTrans (ReifiedProgramT t) where lift = flip Lift Return
